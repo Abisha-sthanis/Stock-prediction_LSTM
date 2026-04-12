@@ -1,4 +1,4 @@
-                                                           Stock Market Prediction using LSTM
+                                          Stock Market Prediction using LSTM
 Project Overview
   The Stock Market Trend Prediction System is a Data Science and Deep Learning-based project designed to predict future stock price movements using historical stock market data.
   It helps investors, traders, and analysts make better decisions by analyzing past trends and forecasting future prices.
