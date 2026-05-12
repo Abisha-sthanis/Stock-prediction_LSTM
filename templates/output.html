@@ -9,11 +9,14 @@
 
     <p>Your prediction is generated using LSTM model.</p>
 
-    <!-- Image placeholder -->
-    <img src="graph.png" alt="Prediction Graph" width="600">
+    <!-- Show graph -->
+    <img src="{{ url_for('static', filename='graph.png') }}" 
+         alt="Prediction Graph" 
+         width="600">
 
     <br><br>
-    <a href="input.html">
+
+    <a href="/input">
         <button>Back</button>
     </a>
 
