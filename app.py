@@ -10,18 +10,20 @@ from tensorflow.keras.layers import LSTM, Dense
 
 app = Flask(__name__)
 
-# Create static folder if it doesn't exist
+# Create static folder automatically
 os.makedirs("static", exist_ok=True)
 
 # Load dataset
 df = pd.read_csv("ADANIPORTS.csv")
 
+# Convert Date column
 df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
 df = df.sort_values('Date')
 
+# Use Close price
 data = df['Close'].values.reshape(-1, 1)
 
-# Normalize data
+# Scale data
 scaler = MinMaxScaler(feature_range=(0, 1))
 data_scaled = scaler.fit_transform(data)
 
@@ -36,7 +38,7 @@ for i in range(60, len(data_scaled)):
 X = np.array(X)
 y = np.array(y)
 
-# Train/Test Split
+# Train/Test split
 split = int(len(X) * 0.8)
 
 X_train = X[:split]
@@ -45,8 +47,13 @@ y_train = y[:split]
 # Build LSTM Model
 model = Sequential()
 
-model.add(LSTM(50, return_sequences=True,
-               input_shape=(X_train.shape[1], 1)))
+model.add(
+    LSTM(
+        50,
+        return_sequences=True,
+        input_shape=(X_train.shape[1], 1)
+    )
+)
 
 model.add(LSTM(50))
 
@@ -83,12 +90,14 @@ def predict():
 
     days = int(request.form['days'])
 
+    # Last 60 days data
     last_60 = data_scaled[-60:]
 
     temp = last_60.copy()
 
     predictions = []
 
+    # Predict future days
     for i in range(days):
 
         x_input = temp[-60:].reshape(1, 60, 1)
@@ -99,21 +108,20 @@ def predict():
 
         temp = np.vstack((temp, pred))
 
+    # Convert back to original values
     predictions = scaler.inverse_transform(
         np.array(predictions).reshape(-1, 1)
     )
 
-    # Create Graph
+    # Create graph
     plt.figure(figsize=(8, 4))
     plt.plot(predictions)
     plt.title("Future Stock Price Prediction")
     plt.xlabel("Days")
-    plt.ylabel("Price")
+    plt.ylabel("Predicted Price")
 
-    graph_path = os.path.join("static", "graph.png")
-
-    plt.savefig(graph_path)
-
+    # Save graph
+    plt.savefig("static/graph.png")
     plt.close()
 
     return render_template(
@@ -122,5 +130,5 @@ def predict():
     )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
