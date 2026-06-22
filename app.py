@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import os
 
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 
@@ -20,10 +22,10 @@ df = pd.read_csv("ADANIPORTS.csv")
 df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
 df = df.sort_values('Date')
 
-# Use Close price
+# Use Close Price
 data = df['Close'].values.reshape(-1, 1)
 
-# Scale data
+# Scaling
 scaler = MinMaxScaler(feature_range=(0, 1))
 data_scaled = scaler.fit_transform(data)
 
@@ -38,13 +40,16 @@ for i in range(60, len(data_scaled)):
 X = np.array(X)
 y = np.array(y)
 
-# Train/Test split
+# Train/Test Split
 split = int(len(X) * 0.8)
 
 X_train = X[:split]
-y_train = y[:split]
+X_test = X[split:]
 
-# Build LSTM Model
+y_train = y[:split]
+y_test = y[split:]
+
+# Build Model
 model = Sequential()
 
 model.add(
@@ -64,13 +69,30 @@ model.compile(
     loss='mean_squared_error'
 )
 
-# Train model
+# Train Model
 model.fit(
     X_train,
     y_train,
     epochs=5,
     batch_size=32,
     verbose=1
+)
+
+# RMSE Calculation
+test_predictions = model.predict(X_test)
+
+test_predictions = scaler.inverse_transform(
+    test_predictions
+)
+
+actual = scaler.inverse_transform(
+    y_test.reshape(-1, 1)
+)
+rmse = np.sqrt(
+    mean_squared_error(
+        actual,
+        test_predictions
+    )
 )
 
 # ---------------- ROUTES ---------------- #
@@ -88,45 +110,77 @@ def input_page():
 @app.route('/predict', methods=['POST'])
 def predict():
 
+    stock_name = request.form['stock']
     days = int(request.form['days'])
 
-    # Last 60 days data
+    # Last 60 Days
     last_60 = data_scaled[-60:]
 
     temp = last_60.copy()
 
     predictions = []
 
-    # Predict future days
+    # Future Prediction
     for i in range(days):
 
         x_input = temp[-60:].reshape(1, 60, 1)
 
-        pred = model.predict(x_input, verbose=0)
+        pred = model.predict(
+            x_input,
+            verbose=0
+        )
 
         predictions.append(pred[0][0])
 
         temp = np.vstack((temp, pred))
 
-    # Convert back to original values
+    # Convert to Original Scale
     predictions = scaler.inverse_transform(
         np.array(predictions).reshape(-1, 1)
     )
 
-    # Create graph
+    # Save Future Prediction Graph
     plt.figure(figsize=(8, 4))
-    plt.plot(predictions)
-    plt.title("Future Stock Price Prediction")
-    plt.xlabel("Days")
-    plt.ylabel("Predicted Price")
 
-    # Save graph
-    plt.savefig("static/graph.png")
+    plt.plot(
+        predictions,
+        marker='o'
+    )
+
+    plt.title(
+        'Future Stock Price Prediction'
+    )
+
+    plt.xlabel('Days')
+    plt.ylabel('Predicted Price')
+
+    plt.grid(True)
+
+    plt.savefig(
+        'static/graph.png'
+    )
+
     plt.close()
 
+    # Table Data
+    table_data = []
+
+    for i in range(len(predictions)):
+
+        table_data.append({
+            "day": i + 1,
+            "price": round(
+                float(predictions[i][0]),
+                2
+            )
+        })
+
     return render_template(
-        "output.html",
-        days=days
+        'output.html',
+        stock_name=stock_name,
+        days=days,
+        rmse=round(rmse, 2),
+        table_data=table_data
     )
 
 
