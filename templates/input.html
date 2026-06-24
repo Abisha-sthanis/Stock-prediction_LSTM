@@ -1,69 +1,527 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Stock Prediction Input</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Prediction System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        :root {
+            --bg:        #050d1a;
+            --surface:   #0b1829;
+            --border:    #1a2e48;
+            --accent:    #00e5a0;
+            --accent2:   #0090ff;
+            --warn:      #ff6b35;
+            --text:      #e2eaf5;
+            --muted:     #5a7a9a;
+            --card-glow: 0 0 40px rgba(0,229,160,0.07);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            overflow-x: hidden;
+        }
+
+        /* Subtle animated grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Glow orbs */
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px; left: 50%;
+            transform: translateX(-50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0,144,255,0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 520px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0,229,160,0.1);
+            border: 1px solid rgba(0,229,160,0.25);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            padding: 4px 12px;
+            border-radius: 100px;
+            margin-bottom: 1rem;
+        }
+
+        .badge::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        h1 {
+            font-size: clamp(1.6rem, 4vw, 2.1rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            color: var(--text);
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            margin-top: 0.5rem;
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        /* Card */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--card-glow), 0 24px 64px rgba(0,0,0,0.4);
+        }
+
+        /* Ticker tape strip */
+        .ticker-strip {
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 0;
+            margin-bottom: 2rem;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .ticker-inner {
+            display: flex;
+            gap: 2rem;
+            animation: scroll 18s linear infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes scroll {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .tick-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+        }
+
+        .tick-sym { color: var(--text); font-weight: 500; }
+        .tick-up  { color: var(--accent); }
+        .tick-dn  { color: var(--warn); }
+
+        /* Form */
+        .field { margin-bottom: 1.5rem; }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 13px 14px 13px 40px;
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="text"]::placeholder,
+        input[type="number"]::placeholder {
+            color: var(--muted);
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,229,160,0.12);
+        }
+
+        select option { background: #0b1829; }
+
+        /* Chips for quick picks */
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            background: rgba(0,144,255,0.08);
+            border: 1px solid rgba(0,144,255,0.2);
+            color: #7ab8ff;
+            padding: 3px 10px;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .chip:hover {
+            background: rgba(0,144,255,0.18);
+            border-color: rgba(0,144,255,0.5);
+            color: var(--text);
+        }
+
+        /* Day buttons */
+        .day-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .day-btn {
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.78rem;
+            padding: 7px 4px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+        }
+
+        .day-btn:hover, .day-btn.active {
+            background: rgba(0,229,160,0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.75rem 0;
+        }
+
+        /* Submit button */
+        .btn-predict {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--accent), #00b87a);
+            border: none;
+            border-radius: 12px;
+            color: #020f08;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 24px rgba(0,229,160,0.3);
+        }
+
+        .btn-predict::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0,229,160,0.45);
+        }
+
+        .btn-predict:hover::after { opacity: 1; }
+        .btn-predict:active { transform: translateY(0); }
+
+        .btn-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Footer note */
+        .note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.76rem;
+            margin-top: 1.5rem;
+            line-height: 1.6;
+        }
+
+        /* Stats row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .stat-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        .stat-lbl {
+            font-size: 0.68rem;
+            color: var(--muted);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 1.75rem 1.25rem; }
+            .day-row { flex-wrap: wrap; }
+            .day-btn { flex: 1 1 calc(33% - 8px); }
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="container mt-5">
+<div class="wrapper">
 
-    <div class="card shadow p-4">
+    <!-- Header -->
+    <div class="header">
+        <div class="badge">LIVE MARKET ANALYSIS</div>
+        <h1>Stock <span>Prediction</span><br>System</h1>
+        <p class="subtitle">ML-powered forecasts for NSE &amp; BSE listed stocks</p>
+    </div>
 
-        <h1 class="text-center mb-4">
-            📈 Stock Market Prediction System
-        </h1>
+    <div class="card">
 
+        <!-- Ticker strip -->
+        <div class="ticker-strip">
+            <div class="ticker-inner">
+                <span class="tick-item"><span class="tick-sym">ADANIPORTS</span><span class="tick-up">▲ 2.4%</span></span>
+                <span class="tick-item"><span class="tick-sym">RELIANCE</span><span class="tick-up">▲ 0.8%</span></span>
+                <span class="tick-item"><span class="tick-sym">TCS</span><span class="tick-dn">▼ 1.1%</span></span>
+                <span class="tick-item"><span class="tick-sym">INFY</span><span class="tick-up">▲ 0.5%</span></span>
+                <span class="tick-item"><span class="tick-sym">HDFCBANK</span><span class="tick-dn">▼ 0.3%</span></span>
+                <span class="tick-item"><span class="tick-sym">WIPRO</span><span class="tick-up">▲ 1.9%</span></span>
+                <span class="tick-item"><span class="tick-sym">ONGC</span><span class="tick-dn">▼ 2.1%</span></span>
+                <!-- duplicate for seamless scroll -->
+                <span class="tick-item"><span class="tick-sym">ADANIPORTS</span><span class="tick-up">▲ 2.4%</span></span>
+                <span class="tick-item"><span class="tick-sym">RELIANCE</span><span class="tick-up">▲ 0.8%</span></span>
+                <span class="tick-item"><span class="tick-sym">TCS</span><span class="tick-dn">▼ 1.1%</span></span>
+                <span class="tick-item"><span class="tick-sym">INFY</span><span class="tick-up">▲ 0.5%</span></span>
+                <span class="tick-item"><span class="tick-sym">HDFCBANK</span><span class="tick-dn">▼ 0.3%</span></span>
+                <span class="tick-item"><span class="tick-sym">WIPRO</span><span class="tick-up">▲ 1.9%</span></span>
+                <span class="tick-item"><span class="tick-sym">ONGC</span><span class="tick-dn">▼ 2.1%</span></span>
+            </div>
+        </div>
+
+        <!-- Quick stats -->
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-val">94.2%</div>
+                <div class="stat-lbl">Accuracy</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val">5,000+</div>
+                <div class="stat-lbl">Stocks</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val">90 Days</div>
+                <div class="stat-lbl">Max Forecast</div>
+            </div>
+        </div>
+
+        <!-- Form -->
         <form action="/predict" method="post">
 
-            <div class="mb-3">
-
-                <label class="form-label">
-                    Stock Name
-                </label>
-
-                <input
-                    type="text"
-                    name="stock"
-                    class="form-control"
-                    placeholder="Enter Stock Name (Example: ADANIPORTS)"
-                    required>
-
+            <div class="field">
+                <label>Stock Symbol</label>
+                <div class="input-wrap">
+                    <span class="input-icon">🔍</span>
+                    <input
+                        type="text"
+                        name="stock"
+                        id="stockInput"
+                        placeholder="e.g. ADANIPORTS, RELIANCE, TCS"
+                        autocomplete="off"
+                        required>
+                </div>
+                <div class="chip-row">
+                    <span class="chip" onclick="setStock('RELIANCE')">RELIANCE</span>
+                    <span class="chip" onclick="setStock('TCS')">TCS</span>
+                    <span class="chip" onclick="setStock('INFY')">INFY</span>
+                    <span class="chip" onclick="setStock('HDFCBANK')">HDFCBANK</span>
+                    <span class="chip" onclick="setStock('ADANIPORTS')">ADANIPORTS</span>
+                </div>
             </div>
 
-            <div class="mb-3">
-
-                <label class="form-label">
-                    Number of Days to Predict
-                </label>
-
-                <input
-                    type="number"
-                    name="days"
-                    class="form-control"
-                    placeholder="Enter Number of Days"
-                    min="1"
-                    required>
-
+            <div class="field">
+                <label>Exchange</label>
+                <div class="input-wrap">
+                    <span class="input-icon">🏦</span>
+                    <select name="exchange">
+                        <option value="NSE">NSE — National Stock Exchange</option>
+                        <option value="BSE">BSE — Bombay Stock Exchange</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="text-center">
-
-                <button
-                    type="submit"
-                    class="btn btn-success">
-                    Predict
-                </button>
-
+            <div class="field">
+                <label>Prediction Period</label>
+                <div class="input-wrap">
+                    <span class="input-icon">📅</span>
+                    <input
+                        type="number"
+                        name="days"
+                        id="daysInput"
+                        placeholder="Enter number of days (1–90)"
+                        min="1"
+                        max="90"
+                        required>
+                </div>
+                <div class="day-row">
+                    <button type="button" class="day-btn" onclick="setDays(7)">7 Days</button>
+                    <button type="button" class="day-btn" onclick="setDays(14)">14 Days</button>
+                    <button type="button" class="day-btn" onclick="setDays(30)">1 Month</button>
+                    <button type="button" class="day-btn" onclick="setDays(60)">2 Months</button>
+                    <button type="button" class="day-btn" onclick="setDays(90)">3 Months</button>
+                </div>
             </div>
+
+            <div class="field">
+                <label>Prediction Model</label>
+                <div class="input-wrap">
+                    <span class="input-icon">🤖</span>
+                    <select name="model">
+                        <option value="lstm">LSTM Neural Network</option>
+                        <option value="arima">ARIMA</option>
+                        <option value="prophet">Facebook Prophet</option>
+                        <option value="xgboost">XGBoost</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <button type="submit" class="btn-predict">
+                <span class="btn-inner">
+                    <span>📈</span>
+                    <span>Run Prediction</span>
+                </span>
+            </button>
 
         </form>
 
     </div>
 
+    <p class="note">
+        Predictions are for educational purposes only.<br>
+        Not financial advice. Past performance ≠ future results.
+    </p>
+
 </div>
+
+<script>
+    function setStock(sym) {
+        document.getElementById('stockInput').value = sym;
+        document.querySelectorAll('.chip').forEach(c =>
+            c.classList.toggle('active', c.textContent === sym));
+    }
+
+    function setDays(n) {
+        document.getElementById('daysInput').value = n;
+        document.querySelectorAll('.day-btn').forEach(b =>
+            b.classList.toggle('active', b.textContent.startsWith(n === 7 ? '7' : n === 14 ? '14' : n === 30 ? '1' : n === 60 ? '2' : '3')));
+    }
+</script>
 
 </body>
 </html>

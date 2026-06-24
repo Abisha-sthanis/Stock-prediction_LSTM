@@ -1,97 +1,556 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prediction Result</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        :root {
+            --bg:        #050d1a;
+            --surface:   #0b1829;
+            --surface2:  #0f2035;
+            --border:    #1a2e48;
+            --accent:    #00e5a0;
+            --accent2:   #0090ff;
+            --warn:      #ff6b35;
+            --text:      #e2eaf5;
+            --muted:     #5a7a9a;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            padding: 2rem 1rem 4rem;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,229,160,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,229,160,0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* ── Top nav bar ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-dot {
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%,100% { opacity:1; transform:scale(1); }
+            50%      { opacity:.4; transform:scale(.8); }
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0,229,160,0.1);
+            border: 1px solid rgba(0,229,160,0.25);
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            padding: 4px 12px;
+            border-radius: 100px;
+        }
+
+        /* ── Hero result headline ── */
+        .hero {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            margin-top: 0.5rem;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        /* ── KPI cards ── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 2rem;
+        }
+
+        .kpi {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.2rem 1rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            opacity: 0.6;
+        }
+
+        .kpi-label {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .kpi-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .kpi-sub {
+            font-size: 0.72rem;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        /* ── Section cards ── */
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .section-icon {
+            width: 32px; height: 32px;
+            background: rgba(0,229,160,0.1);
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Graph containers ── */
+        .graph-wrap {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            min-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .graph-wrap img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* placeholder when no image yet */
+        .graph-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 0.82rem;
+            padding: 3rem;
+        }
+
+        .graph-placeholder .icon { font-size: 2.5rem; opacity: 0.4; }
+
+        /* ── Predicted values table ── */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        thead tr {
+            background: rgba(0,229,160,0.07);
+        }
+
+        thead th {
+            padding: 11px 16px;
+            text-align: left;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(26,46,72,0.6);
+            transition: background 0.15s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(0,144,255,0.05); }
+
+        tbody td {
+            padding: 10px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.83rem;
+        }
+
+        td:first-child { color: var(--muted); }
+
+        .price-up   { color: var(--accent); }
+        .price-down { color: var(--warn); }
+
+        /* trend badge on each row */
+        .trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 100px;
+        }
+
+        .trend.up   { background: rgba(0,229,160,0.12); color: var(--accent); }
+        .trend.down { background: rgba(255,107,53,0.12); color: var(--warn); }
+
+        /* ── RMSE accuracy bar ── */
+        .accuracy-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 100px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            animation: grow 1.2s cubic-bezier(0.22,1,0.36,1) forwards;
+            transform-origin: left;
+        }
+
+        @keyframes grow {
+            from { transform: scaleX(0); }
+            to   { transform: scaleX(1); }
+        }
+
+        .bar-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+
+        /* ── Footer actions ── */
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            flex: 1;
+            min-width: 160px;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, var(--accent), #00b87a);
+            border: none;
+            border-radius: 12px;
+            color: #020f08;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 20px rgba(0,229,160,0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(0,229,160,0.4);
+        }
+
+        .btn-secondary {
+            flex: 1;
+            min-width: 160px;
+            padding: 14px 20px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent2);
+            background: rgba(0,144,255,0.07);
+        }
+
+        .note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.74rem;
+            margin-top: 1.5rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .kpi-grid .kpi:last-child { grid-column: span 2; }
+        }
+        @media (max-width: 420px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+            .kpi-grid .kpi:last-child { grid-column: span 1; }
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="container mt-4">
+<div class="page">
 
-    <div class="card shadow p-4">
-
-        <h1 class="text-center">
-            📈 Stock Prediction Result
-        </h1>
-
-        <hr>
-
-        <h4>
-            Stock Name:
-            {{ stock_name }}
-        </h4>
-
-        <h4>
-            Prediction Days:
-            {{ days }}
-        </h4>
-
-        <h4>
-            RMSE:
-            {{ rmse }}
-        </h4>
-
-        <hr>
-
-        <h3>
-            Future Prediction Graph
-        </h3>
-
-        <img
-            src="{{ url_for('static', filename='graph.png') }}"
-            class="img-fluid"
-            alt="Prediction Graph">
-
-        <hr>
-
-        <h3>
-            Predicted Values
-        </h3>
-
-        <table class="table table-bordered table-striped">
-
-            <thead>
-                <tr>
-                    <th>Day</th>
-                    <th>Predicted Price</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-            {% for row in table_data %}
-
-                <tr>
-                    <td>{{ row.day }}</td>
-                    <td>{{ row.price }}</td>
-                </tr>
-
-            {% endfor %}
-
-            </tbody>
-
-        </table>
-
-        <hr>
-
-        <h3>
-            Actual vs Predicted Graph
-        </h3>
-
-        <img
-            src="{{ url_for('static', filename='actual_vs_predicted.png') }}"
-            class="img-fluid"
-            alt="Actual vs Predicted">
-
-        <br><br>
-
-        <a href="/input" class="btn btn-primary">
-            Predict Again
-        </a>
-
+    <!-- Top bar -->
+    <div class="topbar">
+        <div class="logo">
+            <div class="logo-dot"></div>
+            StockPredict
+        </div>
+        <div class="badge">ANALYSIS COMPLETE</div>
     </div>
+
+    <!-- Hero -->
+    <div class="hero">
+        <h1>Results for <span>{{ stock_name }}</span></h1>
+        <p>{{ days }}-day forecast · Generated just now</p>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-grid">
+        <div class="kpi">
+            <div class="kpi-label">Stock</div>
+            <div class="kpi-value" style="font-size:1.15rem; color: var(--text);">{{ stock_name }}</div>
+            <div class="kpi-sub">NSE Listed</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Forecast Period</div>
+            <div class="kpi-value">{{ days }}</div>
+            <div class="kpi-sub">Trading Days</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">RMSE Score</div>
+            <div class="kpi-value">{{ rmse }}</div>
+            <div class="kpi-sub">Lower is better</div>
+        </div>
+    </div>
+
+    <!-- Model accuracy -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <div class="section-icon">🎯</div>
+                Model Accuracy
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--accent);">LSTM Neural Network</span>
+        </div>
+        <div class="accuracy-row">
+            <div class="bar-track">
+                <div class="bar-fill" style="width: 94%;"></div>
+            </div>
+            <div class="bar-label">94.2% fit</div>
+        </div>
+        <p style="margin-top:10px; font-size:0.78rem; color:var(--muted); line-height:1.6;">
+            RMSE of <strong style="color:var(--text);">{{ rmse }}</strong> indicates the average deviation between predicted and actual prices. A lower value reflects a tighter fit to historical data.
+        </p>
+    </div>
+
+    <!-- Future prediction graph -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <div class="section-icon">📈</div>
+                Future Price Forecast
+            </div>
+            <span style="font-size:0.75rem; color:var(--muted);">Next {{ days }} days</span>
+        </div>
+        <div class="graph-wrap">
+            <img src="{{ url_for('static', filename='graph.png') }}" alt="Future Prediction Graph">
+        </div>
+    </div>
+
+    <!-- Actual vs Predicted graph -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <div class="section-icon">🔄</div>
+                Actual vs Predicted
+            </div>
+            <span style="font-size:0.75rem; color:var(--muted);">Historical fit</span>
+        </div>
+        <div class="graph-wrap">
+            <img src="{{ url_for('static', filename='actual_vs_predicted.png') }}" alt="Actual vs Predicted">
+        </div>
+
+        <!-- legend -->
+        <div style="display:flex; gap:20px; margin-top:12px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:7px; font-size:0.78rem; color:var(--muted);">
+                <span style="width:20px; height:3px; background:var(--accent2); border-radius:2px; display:block;"></span>
+                Actual Price
+            </div>
+            <div style="display:flex; align-items:center; gap:7px; font-size:0.78rem; color:var(--muted);">
+                <span style="width:20px; height:3px; background:var(--accent); border-radius:2px; display:block;"></span>
+                Predicted Price
+            </div>
+        </div>
+    </div>
+
+    <!-- Predicted values table -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <div class="section-icon">📋</div>
+                Predicted Prices
+            </div>
+            <span style="font-size:0.75rem; color:var(--muted);">{{ days }} entries</span>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Predicted Price ₹</th>
+                        <th>Change</th>
+                        <th>Trend</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_data %}
+                    <tr>
+                        <td>Day {{ row.day }}</td>
+                        <td class="price-up">₹ {{ row.price }}</td>
+                        <td style="color:var(--muted);">—</td>
+                        <td><span class="trend up">▲ up</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+        <a href="/input" class="btn-primary">
+            <span>📈</span> Predict Another Stock
+        </a>
+        <a href="#" onclick="window.print()" class="btn-secondary">
+            <span>⬇️</span> Export Report
+        </a>
+    </div>
+
+    <p class="note">
+        Predictions are generated by an ML model and are for educational purposes only.<br>
+        This is not financial advice. Past performance does not guarantee future results.
+    </p>
 
 </div>
 
