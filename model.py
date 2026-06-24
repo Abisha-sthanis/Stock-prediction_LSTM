@@ -135,8 +135,8 @@ plt.xlabel('Days')
 plt.ylabel('Price')
 plt.legend()
 
-plt.savefig('actual_vs_predicted.png')
-plt.show()
+plt.savefig('static/actual_vs_predicted.png')
+plt.close()
 
 # Moving Average Graph
 plt.figure(figsize=(10,5))
@@ -149,7 +149,7 @@ plt.xlabel('Days')
 plt.ylabel('Price')
 plt.legend()
 
-plt.savefig('moving_average.png')
-plt.show()
+plt.savefig('static/moving_average.png')
+plt.close()
 
 print("Model Training Completed Successfully")
