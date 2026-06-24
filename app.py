@@ -84,14 +84,14 @@ plt.close()
 
 @app.route('/')
 def home():
-    # ← was 'welcome.html', now matches stock_prediction_home.html
-    return render_template('stock_prediction_home.html')
+    # 'welcome.html',
+    return render_template('welcome.html')
 
 
 @app.route('/input')
 def input_page():
-    # ← was 'input.html', now matches stock_prediction.html
-    return render_template('stock_prediction.html')
+    # ←  'input.html'
+    return render_template('input.html')
 
 
 @app.route('/predict', methods=['POST'])
@@ -141,8 +141,8 @@ def predict():
     ]
 
     return render_template(
-        # ← was 'output.html', now matches stock_prediction_result.html
-        'stock_prediction_result.html',
+        # ← 'output.html'
+        'output.html',
         stock_name=stock_name,
         days=days,
         rmse=round(rmse, 2),
